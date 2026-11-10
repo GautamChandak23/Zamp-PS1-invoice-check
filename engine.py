@@ -197,7 +197,8 @@ class Ledger:
                     if not order or not movements:
                         raise ValueError('Approval requires a matched order and ledger movements')
                     code='APPROVED_REPLACEMENT' if replacement else 'APPROVED_PO_INFERRED' if not doc.get('po_ref') else 'APPROVED'
-                    detail=f'{ref}: all matched lines approved.'
+                    detail=(f'{ref} (inferred): no PO number is printed, and {ref} is the only open order that covers every line. '
+                            'All matched lines approved.') if code=='APPROVED_PO_INFERRED' else f'{ref}: all matched lines approved.'
             stage('Record decision')
             run=self.query(db,'INSERT INTO runs(session,digest,vendor,number,po,payload,status,reason,detail,parent,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?) RETURNING id',
                            (sid,digest,vendor,number,ref,json.dumps(doc),status,code,detail,parent,started)).fetchone()['id']
