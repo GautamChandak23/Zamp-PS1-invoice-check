@@ -158,8 +158,11 @@ def match_order(seed,vendor,doc,add):
     candidates=[o for o in valid if all(len(match_lines(line,o))==1 for line in doc['lines'])]
     if len(candidates)==1:
         return candidates[0]
-    add('PO_AMBIGUOUS' if candidates else 'PO_UNMATCHED',
-        'Possible orders: '+', '.join(o['po'] for o in candidates) if candidates else 'No open order matches this vendor, currency and items.')
+    if candidates:
+        add('PO_AMBIGUOUS',f"No PO number is printed, and {len(candidates)} open orders could cover every line: "
+                           f"{', '.join(o['po'] for o in candidates)}. The system will not pick one.")
+    else:
+        add('PO_UNMATCHED','No PO number is printed, and no open order matches this vendor, currency and items.')
     return None
 
 
@@ -174,7 +177,10 @@ def reconcile(doc,order,balance,buyer,add):
         matches=match_lines(line,order)
         if len(matches)!=1:
             complete=False
-            add('CHARGE_NOT_ON_PO',f"{line.get('description')} has no unique line on {order['po']}.")
+            item = ' '.join(x for x in (line.get('item_code'), line.get('description')) if x)
+            amount = inr(line['amount_paise']) if type(line.get('amount_paise')) is int else 'an amount'
+            add('CHARGE_NOT_ON_PO', f"'{item}' ({amount}) is billed but is not a line on {order['po']}." if not matches else
+                                    f"'{item}' matches more than one line on {order['po']}.")
             continue
         term=matches[0]
         key=term['line_no']
