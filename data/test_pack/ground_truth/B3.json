@@ -1,0 +1,37 @@
+{
+  "file": "B3.pdf",
+  "layout": "A",
+  "scan": null,
+  "vendor_name": "Tapivastra Knits LLP",
+  "supplier_city": "Surat",
+  "supplier_state": "Gujarat",
+  "supplier_state_code": "24",
+  "buyer_name": "Meridian Threads Pvt Ltd",
+  "place_of_supply_state_code": "23",
+  "invoice_no": "INV-108",
+  "invoice_date": "2026-11-05",
+  "po_ref": null,
+  "currency": "INR",
+  "lines": [
+    {
+      "item_code": "TS180",
+      "hsn": "6109",
+      "description": "Cotton crew T-shirt 180 GSM",
+      "qty": 50,
+      "unit_price_paise": 20000,
+      "amount_paise": 1000000
+    }
+  ],
+  "subtotal_paise": 1000000,
+  "taxes": [
+    {
+      "type": "IGST",
+      "rate_pct": "5",
+      "amount_paise": 50000
+    }
+  ],
+  "round_off_paise": 0,
+  "total_paise": 1050000,
+  "amount_in_words": "Ten Thousand Five Hundred Only",
+  "notes": "Values as printed. null = not readable on the document; an extractor must not infer it."
+}

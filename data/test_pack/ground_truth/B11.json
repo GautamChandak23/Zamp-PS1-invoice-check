@@ -1,0 +1,45 @@
+{
+  "file": "B11.pdf",
+  "layout": "C",
+  "scan": null,
+  "vendor_name": "Noyyal Threadworks Pvt Ltd",
+  "supplier_city": "Tiruppur",
+  "supplier_state": "Tamil Nadu",
+  "supplier_state_code": "33",
+  "buyer_name": "Meridian Threads Pvt Ltd",
+  "place_of_supply_state_code": "23",
+  "invoice_no": "NTW/2026-27/0418",
+  "invoice_date": "2026-11-06",
+  "po_ref": "PO-112",
+  "currency": "INR",
+  "lines": [
+    {
+      "item_code": "TS180",
+      "hsn": "6109",
+      "description": "Cotton crew T-shirt 180 GSM",
+      "qty": 150,
+      "unit_price_paise": 19500,
+      "amount_paise": 2925000
+    },
+    {
+      "item_code": "PL220",
+      "hsn": "6105",
+      "description": "Polo shirt 220 GSM",
+      "qty": 100,
+      "unit_price_paise": 32000,
+      "amount_paise": 3200000
+    }
+  ],
+  "subtotal_paise": 6125000,
+  "taxes": [
+    {
+      "type": "IGST",
+      "rate_pct": "5",
+      "amount_paise": 306250
+    }
+  ],
+  "round_off_paise": 50,
+  "total_paise": 6431300,
+  "amount_in_words": "Sixty Four Thousand Three Hundred Thirteen Only",
+  "notes": "Values as printed. null = not readable on the document; an extractor must not infer it."
+}

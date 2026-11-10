@@ -1,0 +1,123 @@
+{
+  "note": "Fictional test data. Money in paise (integer). Load a fresh copy into every demo session.",
+  "buyer": {
+    "name": "Meridian Threads Pvt Ltd",
+    "city": "Indore",
+    "state": "Madhya Pradesh",
+    "state_code": "23"
+  },
+  "vendors": [
+    {
+      "id": "V-A",
+      "name": "Tapivastra Knits LLP",
+      "city": "Surat",
+      "state": "Gujarat",
+      "state_code": "24",
+      "approved": true
+    },
+    {
+      "id": "V-B",
+      "name": "Malwa Fabricraft Pvt Ltd",
+      "city": "Indore",
+      "state": "Madhya Pradesh",
+      "state_code": "23",
+      "approved": true
+    },
+    {
+      "id": "V-C",
+      "name": "Noyyal Threadworks Pvt Ltd",
+      "city": "Tiruppur",
+      "state": "Tamil Nadu",
+      "state_code": "33",
+      "approved": true
+    }
+  ],
+  "purchase_orders": [
+    {
+      "po": "PO-104",
+      "vendor_id": "V-A",
+      "po_date": "2026-10-20",
+      "currency": "INR",
+      "status": "open",
+      "expected_tax_type": "IGST",
+      "lines": [
+        {
+          "line_no": 1,
+          "item": "TS180",
+          "qty": 500,
+          "unit_price_paise": 20000,
+          "gst_rate_pct": 5,
+          "description": "Cotton crew T-shirt 180 GSM",
+          "hsn": "6109"
+        }
+      ]
+    },
+    {
+      "po": "PO-107",
+      "vendor_id": "V-A",
+      "po_date": "2026-10-28",
+      "currency": "INR",
+      "status": "open",
+      "expected_tax_type": "IGST",
+      "lines": [
+        {
+          "line_no": 1,
+          "item": "TS180",
+          "qty": 300,
+          "unit_price_paise": 20000,
+          "gst_rate_pct": 5,
+          "description": "Cotton crew T-shirt 180 GSM",
+          "hsn": "6109"
+        }
+      ]
+    },
+    {
+      "po": "PO-110",
+      "vendor_id": "V-B",
+      "po_date": "2026-10-22",
+      "currency": "INR",
+      "status": "open",
+      "expected_tax_type": "CGST+SGST",
+      "lines": [
+        {
+          "line_no": 1,
+          "item": "HD300",
+          "qty": 200,
+          "unit_price_paise": 45000,
+          "gst_rate_pct": 5,
+          "description": "Fleece hoodie 300 GSM",
+          "hsn": "6110"
+        }
+      ]
+    },
+    {
+      "po": "PO-112",
+      "vendor_id": "V-C",
+      "po_date": "2026-10-25",
+      "currency": "INR",
+      "status": "open",
+      "expected_tax_type": "IGST",
+      "lines": [
+        {
+          "line_no": 1,
+          "item": "TS180",
+          "qty": 400,
+          "unit_price_paise": 19500,
+          "gst_rate_pct": 5,
+          "description": "Cotton crew T-shirt 180 GSM",
+          "hsn": "6109"
+        },
+        {
+          "line_no": 2,
+          "item": "PL220",
+          "qty": 200,
+          "unit_price_paise": 32000,
+          "gst_rate_pct": 5,
+          "description": "Polo shirt 220 GSM",
+          "hsn": "6105"
+        }
+      ]
+    }
+  ],
+  "ledger": []
+}

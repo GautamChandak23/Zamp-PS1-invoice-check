@@ -1,0 +1,19 @@
+case,files,setup,expected_decision,reason_code,headline
+R1,R1.pdf,Fresh session,Approved,APPROVED,300 x Rs 200 matches PO-104 line 1.
+R2,R2.pdf,After R1,Held,PRICE_VARIANCE,"Billed Rs 250 per shirt against Rs 200 on PO-104: Rs 8,000 more for 160 shirts."
+R3,R3.pdf,After R2,Duplicate,DUPLICATE_SAME_FILE,"Same file as R1 (INV-101), already approved; linked to that decision."
+R4,R4.pdf,After R3,Held,CHANGED_VERSION,INV-101 was approved as 300 x Rs 200; this version says 250 x Rs 240.
+B1,B1.pdf,Fresh session,Approved,APPROVED,Phone-style scan read; 100 x Rs 200 matches PO-104.
+B2,B2.pdf,Fresh session,Held,FIELD_UNREADABLE,Unit price on line 1 is smudged. Amount / quantity would give Rs 200 but must not be used.
+B3,B3.pdf,Fresh session,Held,PO_AMBIGUOUS,No PO number; PO-104 and PO-107 both fit.
+B4,B4.pdf,Fresh session (unseen layout: keep aside during build),Approved,APPROVED_PO_INFERRED,No PO number; PO-110 is the only open PO from this vendor for this item.
+B5,B5.pdf,After R1,Held,QTY_EXCEEDS_REMAINING,Bills 250 shirts; only 200 left on PO-104.
+B6,B6.pdf,Fresh session,Held,TAX_TYPE_MISMATCH,"Supplier state 24, place of supply 23: IGST applies, but CGST + SGST is charged."
+B7,B7.pdf,Fresh session,Held,TOTAL_MISMATCH,"Printed total Rs 21,500; lines and tax add up to Rs 21,000."
+B8,B8.pdf,Fresh session; upload B8.pdf twice at the same moment,Approved + Duplicate,APPROVED+DUPLICATE_SAME_FILE,"One approval, one duplicate; deducted once."
+B9,B9.pdf,Fresh session,Held,VENDOR_NOT_APPROVED,Riverband Textiles LLP is not on the approved vendor list.
+B10,B10.pdf,After R1,Held,POSSIBLE_REISSUE,"Same vendor, PO, total and date as INV-101 under a new number; also exceeds the 200 shirts left."
+B11,B11.pdf,Fresh session,Approved,APPROVED,Two lines match PO-112 lines 1 and 2; Rs 0.50 round-off is within tolerance.
+B12,B12a.pdf;B12b.pdf,After R1; upload B12a.pdf and B12b.pdf at the same moment,Approved + Held,APPROVED+QTY_EXCEEDS_REMAINING,"Both bill 150 shirts against 200 left; only the first to commit is approved, the other is held."
+C1,C1.pdf,Fresh session,Held,CHARGE_NOT_ON_PO,"Freight charges of Rs 2,500 are not on PO-104."
+C2,C2.pdf,After R1 and R2; reviewer rejects R2 (INV-102),Approved,APPROVED_REPLACEMENT,Corrected INV-102 at Rs 200 replaces the rejected version.

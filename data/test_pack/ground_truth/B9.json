@@ -1,0 +1,37 @@
+{
+  "file": "B9.pdf",
+  "layout": "A",
+  "scan": null,
+  "vendor_name": "Riverband Textiles LLP",
+  "supplier_city": "Ahmedabad",
+  "supplier_state": "Gujarat",
+  "supplier_state_code": "24",
+  "buyer_name": "Meridian Threads Pvt Ltd",
+  "place_of_supply_state_code": "23",
+  "invoice_no": "RB-2291",
+  "invoice_date": "2026-11-07",
+  "po_ref": "PO-104",
+  "currency": "INR",
+  "lines": [
+    {
+      "item_code": "TS180",
+      "hsn": "6109",
+      "description": "Cotton crew T-shirt 180 GSM",
+      "qty": 100,
+      "unit_price_paise": 20000,
+      "amount_paise": 2000000
+    }
+  ],
+  "subtotal_paise": 2000000,
+  "taxes": [
+    {
+      "type": "IGST",
+      "rate_pct": "5",
+      "amount_paise": 100000
+    }
+  ],
+  "round_off_paise": 0,
+  "total_paise": 2100000,
+  "amount_in_words": "Twenty-One Thousand Only",
+  "notes": "Values as printed. null = not readable on the document; an extractor must not infer it."
+}

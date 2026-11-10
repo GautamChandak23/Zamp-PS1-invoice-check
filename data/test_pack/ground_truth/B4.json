@@ -1,0 +1,42 @@
+{
+  "file": "B4.pdf",
+  "layout": "B",
+  "scan": null,
+  "vendor_name": "Malwa Fabricraft Pvt Ltd",
+  "supplier_city": "Indore",
+  "supplier_state": "Madhya Pradesh",
+  "supplier_state_code": "23",
+  "buyer_name": "Meridian Threads Pvt Ltd",
+  "place_of_supply_state_code": "23",
+  "invoice_no": "MFC/457",
+  "invoice_date": "2026-11-06",
+  "po_ref": null,
+  "currency": "INR",
+  "lines": [
+    {
+      "item_code": "HD300",
+      "hsn": "6110",
+      "description": "Fleece hoodie 300 GSM",
+      "qty": 40,
+      "unit_price_paise": 45000,
+      "amount_paise": 1800000
+    }
+  ],
+  "subtotal_paise": 1800000,
+  "taxes": [
+    {
+      "type": "CGST",
+      "rate_pct": "2.5",
+      "amount_paise": 45000
+    },
+    {
+      "type": "SGST",
+      "rate_pct": "2.5",
+      "amount_paise": 45000
+    }
+  ],
+  "round_off_paise": 0,
+  "total_paise": 1890000,
+  "amount_in_words": "Eighteen Thousand Nine Hundred Only",
+  "notes": "Values as printed. null = not readable on the document; an extractor must not infer it."
+}
