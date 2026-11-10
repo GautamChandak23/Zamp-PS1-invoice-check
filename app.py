@@ -10,6 +10,8 @@ Settings (Streamlit secrets or environment variables):
   PS1_FIXTURE_DIR    test mode only: replay model readings from the test pack
 """
 import json
+from collections import Counter
+import re
 import os
 from datetime import datetime
 from pathlib import Path
@@ -20,6 +22,7 @@ import streamlit as st
 
 import extract
 from engine import Ledger
+from rules import match_lines
 
 HERE = Path(__file__).resolve().parent
 SEED = json.loads((HERE / "data" / "seed.json").read_text())
@@ -97,6 +100,26 @@ with st.sidebar:
         st.warning("Test mode: the model's reading is replayed from the test pack. "
                    "Page reading, OCR and every check run for real.")
 
+view = st.sidebar.radio("View", ["Invoice check", "Assumptions and samples"])
+if view == "Assumptions and samples":
+    st.title("Assumptions and sample invoices")
+    st.write("Each demo session starts with synthetic purchase orders. Prices and balances are in INR before tax. "
+             "Each invoice must match one open order. A PO number is inferred only when none is printed on the "
+             "invoice and the supplier, currency and items identify exactly one open order. Two printed PO numbers "
+             "always go to review.")
+    st.write("Unit prices must match exactly. Only approval consumes the available balance. "
+             "Pending shows held invoices that would be new spend, each counted once at its latest version. "
+             "A changed copy of an already approved invoice is not counted. Pending amounts are not reserved.")
+    st.write("Unreadable critical fields go to review. A reviewer can reject a held invoice with a reason. "
+             "A failed extraction can be retried.")
+    st.subheader("Sample PDFs")
+    st.write("In one fresh session, upload R1, R2, R3 and R4 in order. Use separate fresh sessions for B1 and B2.")
+    for case, label in [("R1", "Original invoice"), ("R2", "Price discrepancy"), ("R3", "Repeat upload"),
+                        ("R4", "Changed version"), ("B1", "Scanned invoice"), ("B2", "Smudged price")]:
+        sample = HERE / "data" / "test_pack" / "invoices" / f"{case}.pdf"
+        st.download_button(f"{case} · {label}", sample.read_bytes(), file_name=sample.name, mime="application/pdf")
+    st.stop()
+
 st.title("Invoice check")
 st.caption("Upload a supplier invoice. It is read, every value is checked against the page, and the invoice is "
            "matched to its purchase order. Only clean invoices are approved; everything else is held with a question.")
@@ -108,16 +131,46 @@ if not ledger.session_exists(sid):
 # ---------------- purchase orders ----------------
 left = ledger.balances(sid)
 vendors = {v["id"]: v["name"] for v in SEED["vendors"]}
+history = ledger.history(sid)
+by_id = {r["id"]: r for r in history}
+orders = {order["po"]: order for order in SEED["purchase_orders"]}
+pending = Counter()
+unknown_amounts = set()
+# Pending = held invoices that would be new spend, each counted once (its latest held version).
+# Left out: a changed copy of an invoice that is already approved, and a possible re-issue of one.
+latest_held = {}
+for run in history:  # oldest first, so a later revision replaces an earlier one
+    if run["status"] != "Held" or not run["review"].get("before"):
+        continue
+    parent = by_id.get(run.get("parent"))
+    if (parent and parent["status"] == "Approved") or run["reason"] == "POSSIBLE_REISSUE":
+        continue
+    key = (run.get("vendor"), run.get("number")) if run.get("number") else ("run", run["id"])
+    latest_held[key] = run
+for run in latest_held.values():
+    order = orders.get(run["po"])
+    if not order:
+        continue
+    for billed in json.loads(run["payload"]).get("lines") or []:
+        matches = match_lines(billed, order)
+        if len(matches) == 1:
+            key = (order["po"], matches[0]["line_no"])
+            if billed.get("amount_paise") is None:
+                unknown_amounts.add(key)
+            else:
+                pending[key] += billed["amount_paise"]
 po_rows = []
 for order in SEED["purchase_orders"]:
     for line in order["lines"]:
         ordered_paise = line["qty"] * line["unit_price_paise"]
         rest = left[order["po"]][str(line["line_no"])]
+        key = (order["po"], line["line_no"])
         po_rows.append({
             "PO": order["po"], "Supplier": vendors[order["vendor_id"]], "Item": line["description"],
             "Unit price": rupees(line["unit_price_paise"]),
             "Ordered": f"{line['qty']} · {rupees(ordered_paise)}",
             "Approved": f"{line['qty'] - rest['qty']} · {rupees(ordered_paise - rest['paise'])}",
+            "Pending billed": rupees(pending[key]) + (" + unreadable" if key in unknown_amounts else ""),
             "Left": f"{rest['qty']} · {rupees(rest['paise'])}",
         })
 with st.expander("Purchase orders in this session (units · amount before tax)", expanded=False):
@@ -140,8 +193,14 @@ if upload is not None and st.button("Check invoice", type="primary"):
     st.rerun()
 
 # ---------------- decision card ----------------
-history = ledger.history(sid)
-by_id = {r["id"]: r for r in history}
+def decision_text(text, run):
+    parent = by_id.get(run.get("parent"))
+    if parent:
+        original = json.loads(parent["payload"] or "{}")
+        name = original.get("invoice_no") or original.get("source_file")
+        if name:
+            text = re.sub(r"\brun " + str(parent["id"]) + r"\b", lambda _: name, text)
+    return re.sub(r"\blines (\d+) ", r"line \1 ", text)
 
 
 def card(run):
@@ -152,16 +211,31 @@ def card(run):
     title = f"**{run['status']}** · {payload.get('source_file', '')}"
     if payload.get("invoice_no"):
         title += f" · {payload['invoice_no']}"
-    style(f"{title}\n\n{run['detail']}")
+    style(f"{title}\n\n{decision_text(run['detail'], run)}")
     findings = review.get("findings") or []
     if len(findings) > 1:
-        st.markdown("**Also found**\n" + "\n".join(f"- {f['detail']}" for f in findings[1:]))
+        st.markdown("**Also found**\n" + "\n".join(f"- {decision_text(f['detail'], run)}" for f in findings[1:]))
     if review.get("question"):
         st.markdown(f"**Question for the reviewer:** {review['question']}")
     if run.get("rejection"):
         st.markdown(f"**Rejected** by {run.get('rejected_by')} at {local_time(run.get('rejected_at'))}: "
                     f"{run['rejection']}")
     before, after = review.get("before") or {}, review.get("after") or {}
+    order = orders.get(run.get("po"))
+    if before and order and payload.get("lines"):
+        rows = []
+        for index, billed in enumerate(payload["lines"], 1):
+            matches = match_lines(billed, order)
+            term = matches[0] if len(matches) == 1 else {}
+            qty = billed.get("qty")
+            price = term.get("unit_price_paise")
+            rows.append({"Invoice line": index, "Item": billed.get("item_code") or billed.get("description"),
+                         "PO line": str(term.get("line_no", "Unmatched")), "Billed units": qty,
+                         "Invoice price": rupees(billed.get("unit_price_paise")), "PO price": rupees(price),
+                         "Billed amount": rupees(billed.get("amount_paise")),
+                         "At PO price": rupees(qty * price if qty is not None and price is not None else None)})
+        st.markdown("**Invoice lines compared with the purchase order**")
+        st.table(pd.DataFrame(rows).set_index("Invoice line"))
     if before:
         st.markdown(f"**{review.get('po')} balance left (units · amount before tax)**")
         st.table(pd.DataFrame([{
@@ -191,7 +265,7 @@ if history:
         payload = json.loads(r["payload"] or "{}")
         table.append({"Run": r["id"], "Time (IST)": local_time(r.get("created_at")),
                       "File": payload.get("source_file", ""), "Invoice": payload.get("invoice_no") or "",
-                      "PO": r.get("po") or "", "Decision": r["status"], "Reason": r["reason"]})
+                      "Supplier": payload.get("vendor_name") or "", "PO": r.get("po") or "", "Decision": r["status"], "Reason": r["reason"]})
     st.dataframe(pd.DataFrame(table), hide_index=True, use_container_width=True)
     pick = st.selectbox("Open a past run", [t["Run"] for t in table],
                         format_func=lambda i: f"Run {i} · {by_id[i]['status']} · "
