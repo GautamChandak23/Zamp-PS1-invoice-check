@@ -198,7 +198,9 @@ class Ledger:
                         raise ValueError('Approval requires a matched order and ledger movements')
                     code='APPROVED_REPLACEMENT' if replacement else 'APPROVED_PO_INFERRED' if not doc.get('po_ref') else 'APPROVED'
                     detail=(f'{ref} (inferred): no PO number is printed, and {ref} is the only open order that covers every line. '
-                            'All matched lines approved.') if code=='APPROVED_PO_INFERRED' else f'{ref}: all matched lines approved.'
+                            'All matched lines approved.') if code=='APPROVED_PO_INFERRED' else (
+                            f"{ref}: corrected {doc.get('invoice_no')} replaces the copy a reviewer rejected. All matched lines approved."
+                            ) if code=='APPROVED_REPLACEMENT' else f'{ref}: all matched lines approved.'
             stage('Record decision')
             run=self.query(db,'INSERT INTO runs(session,digest,vendor,number,po,payload,status,reason,detail,parent,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?) RETURNING id',
                            (sid,digest,vendor,number,ref,json.dumps(doc),status,code,detail,parent,started)).fetchone()['id']
