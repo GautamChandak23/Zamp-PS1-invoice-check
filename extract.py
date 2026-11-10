@@ -101,6 +101,8 @@ Rules:
 - If a value is smudged, cut off or otherwise not clearly legible, leave it out (or use an empty string). Do not guess.
 - Never calculate a value from other values. For example, never work out a unit price from amount divided by quantity.
 - buyer_name is the legal name of the party billed, without its address.
+- item_code is the item code / SKU (e.g. HD300) whenever one is printed, even if it is printed inside the
+  description; description is the item text without that code.
 - State codes are 2-digit GST state codes. If only a state name is printed, give that state's GST code.
 - List every line item, including freight or any other charge, in the order printed.
 - List each tax line (IGST, or CGST and SGST) separately."""
@@ -699,7 +701,13 @@ class Checker:
         if code not in GST_STATES:
             self._missing(fld, printed, "not a GST state code" if printed else "not given by the model")
             return None
-        for row in self.scan.rows:
+        # Evidence row: for the place of supply prefer the "supply" row; for the supplier avoid buyer rows.
+        # (The engine checks both codes against the vendor record and the buyer, so this only picks the row shown.)
+        is_pos = "supply" in fld
+        def preferred(r):
+            t = " ".join(words_of(r))
+            return 0 if (("supply" in t) == is_pos and (is_pos or not re.search(r"\b(buyer|bill)\b", t))) else 1
+        for row in sorted(self.scan.rows, key=preferred):
             text = " ".join(words_of(row))
             if not re.search(r"\b(state|code|supply)\b", text):
                 continue
@@ -783,10 +791,22 @@ def verify(raw: dict, scan: PageScan) -> tuple[dict, list]:
         code_ok = ck.in_region(f"line {i} item code", blank(ln.item_code), region).ok if blank(ln.item_code) else False
         hsn_ok = ck.in_region(f"line {i} HSN", blank(ln.hsn), region).ok if blank(ln.hsn) else False
         desc_ok = ck.in_region(f"line {i} description", blank(ln.description), region, as_phrase=True).ok
+        item_code = ln.item_code.strip() if code_ok else None
+        description = blank(ln.description) if desc_ok else None
+        if not item_code and description:
+            # Some layouts print the code inside the description ("HD300 Fleece hoodie 300 GSM"). Use a leading
+            # code-like word (letters and digits) as the item code, only if it is printed on this line by itself.
+            lead = re.match(r"^\s*((?=[A-Za-z0-9\-/]*[A-Za-z])(?=[A-Za-z0-9\-/]*\d)[A-Za-z0-9][A-Za-z0-9\-/]{1,14})[\s:\-]+(\S.*)$",
+                            description)
+            if lead:
+                code_row = next((r for r in region if lead.group(1).lower() in words_of(r)), None)
+                if code_row is not None:
+                    item_code, description = lead.group(1), lead.group(2).strip()
+                    ck._found(f"line {i} item code", item_code, code_row, note="printed at the start of the description")
         lines.append({
-            "item_code": ln.item_code.strip() if code_ok else None,
+            "item_code": item_code,
             "hsn": ln.hsn.strip() if hsn_ok else None,
-            "description": blank(ln.description) if desc_ok else None,
+            "description": description,
             "qty": integer(qty_t) if q.ok else None,
             "unit_price_paise": int(money(price_t) * 100) if p.ok else None,
             "amount_paise": int(money(amt_t) * 100) if a.ok else None,
