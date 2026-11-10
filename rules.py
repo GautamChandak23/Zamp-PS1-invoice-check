@@ -52,12 +52,22 @@ def compare_versions(old, new):
     for key in before:
         if before[key] == after[key]:
             continue
-        if key == 'lines' and len(before[key]) == len(after[key]):
-            for a, b in zip(before[key], after[key]):
+        if key == 'lines':
+            if len(before[key]) != len(after[key]):
+                changes.append(f'Line count: {len(before[key])} → {len(after[key])}')
+            for n, (a, b) in enumerate(zip(before[key], after[key]), 1):
+                name = a[0].upper() if len(a[0]) <= 12 else f'Line {n}'  # an item code as printed, else the line number
                 for i, label in enumerate(('item', 'HSN', 'quantity', 'unit price', 'line amount')):
                     if a[i] != b[i]:
                         x, y = (inr(a[i]), inr(b[i])) if i >= 3 else (a[i], b[i])
-                        changes.append(f'{a[0]} {label}: {x} → {y}')
+                        changes.append(f'{name} {label}: {x} → {y}')
+        elif key.endswith('_paise'):
+            label = key.removesuffix('_paise').replace('_', ' ')
+            changes.append(f'{label}: {inr(before[key])} → {inr(after[key])}')
+        elif key == 'taxes':
+            def rates(rows):
+                return ', '.join(f'{kind} {rate}% {inr(amount)}' for kind, rate, amount in rows)
+            changes.append(f'Tax: {rates(before[key])} → {rates(after[key])}')
         else:
             changes.append(f'{key}: {before[key]} → {after[key]}')
     return changes
@@ -71,7 +81,7 @@ def missing_fields(doc):
             errors.append(key)
     for key in ('subtotal_paise','total_paise','round_off_paise'):
         if type(doc.get(key)) is not int:
-            errors.append(key)
+            errors.append(key.removesuffix('_paise').replace('_', ' '))
     if doc.get('po_ref_unverified'):
         # a PO number the model read but the page check could not confirm: never treat it as "no PO given"
         errors.append('PO number')
@@ -187,7 +197,9 @@ def reconcile(doc,order,balance,buyer,add):
     for t in doc['taxes']:
         actual[t['type'],Decimal(str(t['rate_pct']))]+=t['amount_paise']
     if {key[0] for key in actual}!=set(types):
-        add('TAX_TYPE_MISMATCH',f"Expected {' + '.join(types)} on {order['po']}.")
+        add('TAX_TYPE_MISMATCH',f"Supplier state {doc['supplier_state_code']}, place of supply {doc['place_of_supply_state_code']}. Expected {' + '.join(types)} on {order['po']}. Invoice shows {' + '.join(sorted({k[0] for k in actual}))}.")
     elif complete and (set(actual)!=set(expected_tax) or any(abs(actual[k]-due)>100 for k,due in expected_tax.items())):
-        add('TAX_VARIANCE','Tax breakdown differs from the PO rates or amounts by rate group.')
+        def breakdown(groups):
+            return ', '.join(f'{kind} {rate}% {inr(amount)}' for (kind,rate),amount in sorted(groups.items()))
+        add('TAX_VARIANCE', f'Expected {breakdown(expected_tax)}. Invoice shows {breakdown(actual)}.')
     return [(k,qty,amounts[k]) for k,qty in quantities.items()]
