@@ -754,7 +754,7 @@ def verify(raw: dict, scan: PageScan) -> tuple[dict, list]:
             ck._missing("PO number", None, "a PO label carries a value that could not be read reliably")
         else:
             doc["po_ref"] = None
-            ck._record(Evidence("PO number", None, "not printed", note="no PO number on the page; the PO will be inferred"))
+            ck._record(Evidence("PO number", None, "not printed", note="no PO number on the page; a PO is inferred only if exactly one open order covers every line"))
     cur = (blank(m.currency) or "").upper()
     cur_row = next((r for r in scan.rows if any(t in ("inr", "₹", "rs", "rs.") for t in words_of(r))), None)
     if cur == "INR" and cur_row:
