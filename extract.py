@@ -198,7 +198,9 @@ class GeminiProvider:
                                                    response_json_schema=SCHEMA),
             )
         except Exception as exc:  # the SDK raises several unrelated types (network, API, timeout)
-            raise ProviderError(f"Gemini call failed: {type(exc).__name__}") from exc
+            code = getattr(exc, "code", None)
+            status = getattr(exc, "status", None)
+            raise ProviderError(f"Gemini call failed: {type(exc).__name__} | HTTP {code} | {status}") from exc
         try:
             return json.loads(resp.text or "")
         except json.JSONDecodeError as exc:
