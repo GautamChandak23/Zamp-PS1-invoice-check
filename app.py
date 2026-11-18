@@ -284,7 +284,7 @@ if history:
             target = st.selectbox("Held invoice", [r["id"] for r in held],
                                   format_func=lambda i: f"Run {i} · {json.loads(by_id[i]['payload'] or '{}').get('invoice_no') or ''}"
                                                         f" · {by_id[i]['reason']}")
-            reason = st.text_input("Reason, sent to the supplier")
+            reason = st.text_input("Reason for rejecting (saved with the decision)")
             who = st.text_input("Your name")
             if st.button("Reject"):
                 try:
