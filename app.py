@@ -113,11 +113,15 @@ if view == "Assumptions and samples":
     st.write("Unreadable critical fields go to review. A reviewer can reject a held invoice with a reason. "
              "A failed extraction can be retried.")
     st.subheader("Sample PDFs")
-    st.write("In one fresh session, upload R1, R2, R3 and R4 in order. Use separate fresh sessions for B1 and B2.")
+    st.write("In one fresh session, upload R1, R2, R3 and R4 in order. Then reject R2 under 'Reject a held invoice' "
+             "and upload C2, the supplier's corrected INV-102. Use a separate fresh session for each of B1 to B4.")
     for case, label in [("R1", "Original invoice"), ("R2", "Price discrepancy"), ("R3", "Repeat upload"),
-                        ("R4", "Changed version"), ("B1", "Scanned invoice"), ("B2", "Smudged price")]:
+                        ("R4", "Changed version"), ("C2", "Corrected INV-102, after rejecting R2"),
+                        ("B1", "Scanned invoice"), ("B2", "Smudged price"),
+                        ("B3", "No PO number, two orders fit"), ("B4", "No PO number, one order fits")]:
         sample = HERE / "data" / "test_pack" / "invoices" / f"{case}.pdf"
-        st.download_button(f"{case} · {label}", sample.read_bytes(), file_name=sample.name, mime="application/pdf")
+        if sample.exists():  # a sample missing from the deployment is skipped, never a crash
+            st.download_button(f"{case} · {label}", sample.read_bytes(), file_name=sample.name, mime="application/pdf")
     st.stop()
 
 st.title("Invoice check")
